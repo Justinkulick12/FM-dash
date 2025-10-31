@@ -26,6 +26,41 @@ function saveCards(cards) {
 
 let cards = loadCards();
 
+const HEADER_ALIASES = {
+  "trip id": "Trip ID",
+  tripid: "Trip ID",
+  "traveler": "Traveler",
+  "traveller": "Traveler",
+  "usa dest": "USA Dest",
+  "usa destination": "USA Dest",
+  "items accepted": "Items Accepted",
+  "items ready to process": "Items Ready to process",
+  "items ready": "Items Ready to process",
+  "trip verification status": "Trip Verification Status",
+  "ship bundle": "Ship Bundle",
+  "total bundle weight": "Total Bundle Weight",
+  "latam departure": "LATAM Departure",
+  "latam arrival": "LATAM Arrival",
+  "max usa date": "Max USA Date",
+};
+
+function normalizeHeaderKey(key = "") {
+  const cleaned = key.replace(/\ufeff/g, "").trim();
+  const lookupKey = cleaned.toLowerCase().replace(/[\s_]+/g, " ");
+  return HEADER_ALIASES[lookupKey] || cleaned;
+}
+
+function normalizeRow(row = {}) {
+  const normalized = {};
+  Object.entries(row).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    const header = normalizeHeaderKey(key);
+    if (header.length === 0) return;
+    normalized[header] = typeof value === "string" ? value.trim() : value;
+  });
+  return normalized;
+}
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -39,14 +74,21 @@ app.get("/api/cards", (req, res) => {
 
 // API: upload CSV rows
 app.post("/api/uploadCsv", (req, res) => {
-  const rows = req.body.rows;
-  if (!Array.isArray(rows)) {
+  const incomingRows = req.body.rows;
+  if (!Array.isArray(incomingRows)) {
     console.log("❌ uploadCsv: invalid rows format", req.body);
     return res.status(400).json({ error: "Invalid rows format" });
   }
+  const rows = incomingRows.map(normalizeRow);
   console.log("📥 Received CSV rows:", rows.length);
   rows.forEach((row, idx) => {
-    const tripId = row["Trip ID"];
+    const tripIdValue = row["Trip ID"];
+    const tripId =
+      typeof tripIdValue === "string"
+        ? tripIdValue.trim()
+        : tripIdValue != null
+        ? String(tripIdValue).trim()
+        : "";
     if (!tripId) {
       console.log(`⚠️ Row ${idx+1} missing Trip ID, skipping`);
       return;

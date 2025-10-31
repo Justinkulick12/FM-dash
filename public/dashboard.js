@@ -2,6 +2,41 @@
 
 import ambassadorNames from "./ambassadors.js";
 
+const HEADER_ALIASES = {
+  "trip id": "Trip ID",
+  tripid: "Trip ID",
+  "traveler": "Traveler",
+  "traveller": "Traveler",
+  "usa dest": "USA Dest",
+  "usa destination": "USA Dest",
+  "items accepted": "Items Accepted",
+  "items ready to process": "Items Ready to process",
+  "items ready": "Items Ready to process",
+  "trip verification status": "Trip Verification Status",
+  "ship bundle": "Ship Bundle",
+  "total bundle weight": "Total Bundle Weight",
+  "latam departure": "LATAM Departure",
+  "latam arrival": "LATAM Arrival",
+  "max usa date": "Max USA Date",
+};
+
+function normalizeHeaderKey(key = "") {
+  const cleaned = key.replace(/\ufeff/g, "").trim();
+  const lookupKey = cleaned.toLowerCase().replace(/[\s_]+/g, " ");
+  return HEADER_ALIASES[lookupKey] || cleaned;
+}
+
+function normalizeRow(row = {}) {
+  const normalized = {};
+  Object.entries(row).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    const header = normalizeHeaderKey(key);
+    if (!header) return;
+    normalized[header] = typeof value === "string" ? value.trim() : value;
+  });
+  return normalized;
+}
+
 const socket = io();
 
 let cards = {};
@@ -107,7 +142,7 @@ function handleFileUpload(evt) {
     header: true,
     skipEmptyLines: true,
     complete: async (res) => {
-      const rows = res.data;
+      const rows = res.data.map(normalizeRow);
       console.log("📥 Parsed CSV rows:", rows.length);
       const errors = mergeCsv(rows);
       if (errors.length) alert("CSV Warnings:\n" + errors.join("\n"));
@@ -135,22 +170,28 @@ function handleFileUpload(evt) {
 function mergeCsv(rows) {
   const errors = [];
   rows.forEach((row, idx) => {
-    const tripId = row["Trip ID"];
+    const tripIdValue = row["Trip ID"];
+    const tripId =
+      typeof tripIdValue === "string"
+        ? tripIdValue.trim()
+        : tripIdValue != null
+        ? String(tripIdValue).trim()
+        : "";
     if (!tripId) {
       errors.push(`Row ${idx + 1}: missing Trip ID`);
       return;
     }
 
     const traveler = (row["Traveler"] || "").trim();
-    const usaDest = row["USA Dest"] || "";
+    const usaDest = (row["USA Dest"] || "").trim();
     const itemsAcceptedRaw = row["Items Accepted"];
     const itemsReadyRaw = row["Items Ready to process"];
-    const status = row["Trip Verification Status"];
-    const shipBundle = row["Ship Bundle"];
-    const totalBundleWeight = row["Total Bundle Weight"];
-    const latamDeparture = row["LATAM Departure"];
-    const latamArrival = row["LATAM Arrival"];
-    const maxUSADate = row["Max USA Date"];
+    const status = (row["Trip Verification Status"] || "").trim();
+    const shipBundle = (row["Ship Bundle"] || "").trim();
+    const totalBundleWeight = (row["Total Bundle Weight"] || "").trim();
+    const latamDeparture = (row["LATAM Departure"] || "").trim();
+    const latamArrival = (row["LATAM Arrival"] || "").trim();
+    const maxUSADate = (row["Max USA Date"] || "").trim();
 
     let accepted = parseInt(itemsAcceptedRaw || "0", 10);
     if (isNaN(accepted)) accepted = 0;
