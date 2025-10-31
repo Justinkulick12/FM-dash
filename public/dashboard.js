@@ -106,23 +106,32 @@ function handleFileUpload(evt) {
   Papa.parse(file, {
     header: true,
     skipEmptyLines: true,
-    complete: (res) => {
+    complete: async (res) => {
       const rows = res.data;
+      console.log("📥 Parsed CSV rows:", rows.length);
       const errors = mergeCsv(rows);
       if (errors.length) alert("CSV Warnings:\n" + errors.join("\n"));
 
-      Object.values(cards).forEach((card) => {
-        fetch("/api/card", {
+      // Send the entire rows array to the server
+      try {
+        const resp = await fetch("/api/uploadCsv", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ card }),
+          body: JSON.stringify({ rows })
         });
-      });
+        const j = await resp.json();
+        console.log("📤 Server responded to uploadCsv:", j);
+      } catch (err) {
+        console.error("❌ uploadCsv failed:", err);
+      }
+
+      // Update local cards + localStorage
       window.localStorage.setItem("bundleBoardCards", JSON.stringify(cards));
       renderAll();
-    },
+    }
   });
 }
+
 
 // --- Merge CSV Data ---
 function mergeCsv(rows) {
