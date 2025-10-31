@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3000;
 
 const CARDS_FILE = path.join(__dirname, "data", "cards.json");
 
-// Utility: load cards from JSON storage
+// Load cards from JSON file
 function loadCards() {
   try {
     const raw = fs.readFileSync(CARDS_FILE, "utf8");
@@ -19,27 +19,19 @@ function loadCards() {
   }
 }
 
-// Utility: save cards to JSON storage
+// Save cards to JSON file
 function saveCards(cards) {
   fs.writeFileSync(CARDS_FILE, JSON.stringify(cards, null, 2), "utf8");
 }
 
-// This function returns all cards
-async function getAllCards() {
-  const cards = loadCards();
-  return cards;
-}
-
-// Initial cards object loaded
 let cards = loadCards();
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 // API: get all cards
-app.get("/api/cards", async (req, res) => {
-  const allCards = await getAllCards();
-  res.json({ cards: allCards });
+app.get("/api/cards", (req, res) => {
+  res.json({ cards });
 });
 
 // API: update/add a card
@@ -64,7 +56,7 @@ app.post("/api/clearCompleted", (req, res) => {
   res.json({ success: true });
 });
 
-// Serve the front‑end
+// Serve index.html on root
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
@@ -72,4 +64,3 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
-
