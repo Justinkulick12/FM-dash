@@ -29,7 +29,6 @@ const resetBtn = document.getElementById("reset-assignee-filter");
 const assignmentsList = document.getElementById("assignments-list");
 
 // --- Event Listeners ---
-
 csvInput.addEventListener("change", handleFileUpload);
 filterButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
@@ -56,7 +55,7 @@ if (resetBtn) {
   });
 }
 
-// --- Socket Real-Time ---
+// --- Socket Real‑Time ---
 socket.on("card-updated", (card) => {
   cards[card.tripId] = card;
   window.localStorage.setItem("bundleBoardCards", JSON.stringify(cards));
@@ -88,7 +87,8 @@ async function loadRemoteState() {
   try {
     const resp = await fetch("/api/cards");
     const j = await resp.json();
-    (j.cards || []).forEach((c) => {
+    const obj = j.cards || {};
+    Object.values(obj).forEach((c) => {
       cards[c.tripId] = c;
     });
     window.localStorage.setItem("bundleBoardCards", JSON.stringify(cards));
@@ -125,13 +125,11 @@ function handleFileUpload(evt) {
         console.error("❌ uploadCsv failed:", err);
       }
 
-      // Update local cards + localStorage
       window.localStorage.setItem("bundleBoardCards", JSON.stringify(cards));
       renderAll();
     }
   });
 }
-
 
 // --- Merge CSV Data ---
 function mergeCsv(rows) {
@@ -366,10 +364,7 @@ function renderAll() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ card }),
       }).then(() => {
-        window.localStorage.setItem(
-          "bundleBoardCards",
-          JSON.stringify(cards)
-        );
+        window.localStorage.setItem("bundleBoardCards", JSON.stringify(cards));
         renderAll();
       });
     });
@@ -392,10 +387,7 @@ function renderAll() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ card }),
       }).then(() => {
-        window.localStorage.setItem(
-          "bundleBoardCards",
-          JSON.stringify(cards)
-        );
+        window.localStorage.setItem("bundleBoardCards", JSON.stringify(cards));
         updateAssignmentsPanel();
       });
     });
@@ -424,6 +416,8 @@ function renderAll() {
   updateSummary();
   updateAssignmentsPanel();
 }
+
+// ... (rest of your utility functions remain unchanged)
 
 // --- Details Modal ---
 function showDetails(card) {
