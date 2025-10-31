@@ -26,8 +26,11 @@ function saveCards(cards) {
 
 let cards = loadCards();
 
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 app.use(express.static(path.join(__dirname, "public")));
+
+// ✅ Log that the server is running
+console.log("✅ Server script loaded.");
 
 // API: get all cards
 app.get("/api/cards", (req, res) => {
@@ -38,10 +41,12 @@ app.get("/api/cards", (req, res) => {
 app.post("/api/card", (req, res) => {
   const card = req.body.card;
   if (!card || !card.tripId) {
+    console.log("❌ Invalid card received:", card);
     return res.status(400).json({ error: "Invalid card" });
   }
   cards[card.tripId] = card;
   saveCards(cards);
+  console.log("✅ Card saved:", card.tripId);
   return res.json({ success: true });
 });
 
@@ -49,6 +54,7 @@ app.post("/api/card", (req, res) => {
 app.post("/api/clearCompleted", (req, res) => {
   for (let tid in cards) {
     if (cards[tid].currentBucket === "Bundle Completed") {
+      console.log("🧹 Clearing completed card:", tid);
       delete cards[tid];
     }
   }
@@ -62,5 +68,5 @@ app.get("/", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+  console.log(`🚀 Server listening on port ${PORT}`);
 });
