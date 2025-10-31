@@ -1,76 +1,75 @@
 // server.js
+
 const express = require("express");
-const bodyParser = require("body-parser");
 const path = require("path");
-const http = require("http");
-const cors = require("cors");
-const { initDb, getAllCards, upsertCard, deleteCardsByBucket, getArchives, restoreArchive } = require("./db");
+const fs = require("fs");
 
 const app = express();
-const server = http.createServer(app);
-const io = require("socket.io")(server);
-
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(bodyParser.json());
+const CARDS_FILE = path.join(__dirname, "data", "cards.json");
+
+// Utility: load cards from JSON storage
+function loadCards() {
+  try {
+    const raw = fs.readFileSync(CARDS_FILE, "utf8");
+    return JSON.parse(raw);
+  } catch (e) {
+    return {};
+  }
+}
+
+// Utility: save cards to JSON storage
+function saveCards(cards) {
+  fs.writeFileSync(CARDS_FILE, JSON.stringify(cards, null, 2), "utf8");
+}
+
+// This function returns all cards
+async function getAllCards() {
+  const cards = loadCards();
+  return cards;
+}
+
+// Initial cards object loaded
+let cards = loadCards();
+
+app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-initDb();
-
-// --- API endpoints ---
-
+// API: get all cards
 app.get("/api/cards", async (req, res) => {
-  const cards = await getAllCards();
-  res.json({ cards });
+  const allCards = await getAllCards();
+  res.json({ cards: allCards });
 });
 
-app.post("/api/card", async (req, res) => {
+// API: update/add a card
+app.post("/api/card", (req, res) => {
   const card = req.body.card;
   if (!card || !card.tripId) {
-    return res.status(400).json({ error: "card or tripId missing" });
+    return res.status(400).json({ error: "Invalid card" });
   }
-  await upsertCard(card);
-  // broadcast to others
-  io.emit("card-updated", card);
-  res.json({ success: true });
+  cards[card.tripId] = card;
+  saveCards(cards);
+  return res.json({ success: true });
 });
 
-app.post("/api/clearCompleted", async (req, res) => {
-  await deleteCardsByBucket("Bundle Completed");
-  io.emit("clear-completed");
-  res.json({ success: true });
-});
-
-app.get("/api/archive", async (req, res) => {
-  const archived = await getArchives();
-  res.json({ archived });
-});
-
-app.post("/api/restoreArchive", async (req, res) => {
-  const { tripId } = req.body;
-  if (!tripId) {
-    return res.status(400).json({ error: "tripId missing" });
+// API: clear completed bucket
+app.post("/api/clearCompleted", (req, res) => {
+  for (let tid in cards) {
+    if (cards[tid].currentBucket === "Bundle Completed") {
+      delete cards[tid];
+    }
   }
-  await restoreArchive(tripId);
-  const card = (await getAllCards()).find(c => c.tripId === tripId);
-  io.emit("card-restored", card);
+  saveCards(cards);
   res.json({ success: true });
 });
 
-// fallback to index.html
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public/index.html"));
+// Serve the front‑end
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// WebSocket connections
-io.on("connection", socket => {
-  console.log("Client connected:", socket.id);
-  socket.on("disconnect", () => {
-    console.log("Client disconnected:", socket.id);
-  });
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
 });
 
-server.listen(PORT, () => {
-  console.log("Server listening on port", PORT);
-});
