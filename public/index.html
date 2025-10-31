@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Shappi Bundle Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <img src="logo.png" alt="Shappi logo" id="logo" />
+    <h1>Bundle Dashboard</h1>
+  </header>
+
+  <div id="top-controls">
+    <div id="upload-area">
+      <input type="file" id="csvFileInput" accept=".csv" />
+    </div>
+    <div id="filters-area">
+      <div id="filter-buttons">
+        <button data-filter="today">Today</button>
+        <button data-filter="this-week">This Week</button>
+        <button data-filter="next-week">Next Week</button>
+        <button data-filter="ambassadors">Ambassador Only</button>
+        <button data-filter="all">All</button>
+      </div>
+      <button id="showArchiveBtn">View Archive</button>
+    </div>
+  </div>
+
+  <!-- ASSIGNMENTS OVERVIEW PANEL -->
+  <section id="assignments-panel">
+    <h2>Team Assignments</h2>
+    <ul id="assignments-list">
+      <!-- dynamic list of team members will appear here -->
+    </ul>
+    <button id="reset-assignee-filter" style="margin-top: 10px;">Reset Filter</button>
+  </section>
+
+  <!-- BUCKET BOARD -->
+  <div id="board-container">
+    <div id="buckets">
+      <div class="bucket" data-bucket="Pending/In Progress">
+        <h3>Pending / In Progress</h3>
+        <div class="bucket-content"></div>
+      </div>
+      <div class="bucket" data-bucket="Approved, Not TA'd">
+        <h3>Approved, Not TA'd</h3>
+        <div class="bucket-content"></div>
+      </div>
+      <div class="bucket" data-bucket="Approved, TA in progress">
+        <h3>Approved, TA in Progress</h3>
+        <div class="bucket-content"></div>
+      </div>
+      <div class="bucket" data-bucket="TA Completed, Ready for bundle">
+        <h3>TA Completed / Ready</h3>
+        <div class="bucket-content"></div>
+      </div>
+      <div class="bucket" data-bucket="Bundling in Progress">
+        <h3>Bundling in Progress</h3>
+        <div class="bucket-content"></div>
+      </div>
+      <div class="bucket" data-bucket="Bundle Completed">
+        <h3>Bundle Completed</h3>
+        <button id="clearCompletedBtn">Clear Completed</button>
+        <div class="bucket-content"></div>
+      </div>
+      <div class="bucket" data-bucket="Labeled">
+        <h3>Labeled</h3>
+        <div class="bucket-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS AND CHARTS -->
+  <div id="stats-charts">
+    <canvas id="bucketChart" width="400" height="200"></canvas>
+    <div id="summary"></div>
+  </div>
+
+  <!-- ARCHIVE MODAL -->
+  <div id="archive-section" class="modal hidden">
+    <div class="modal-content">
+      <h2>Archived Trips</h2>
+      <div id="archiveList"></div>
+      <button id="closeArchiveBtn">Close Archive</button>
+    </div>
+  </div>
+
+  <!-- DETAIL MODAL -->
+  <div id="detail-modal" class="modal hidden">
+    <div class="modal-content">
+      <button class="close-detail">&times;</button>
+      <div id="detail-body"></div>
+    </div>
+  </div>
+
+  <!-- SCRIPT INCLUDES -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.0/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+  <script type="module" src="dashboard.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
